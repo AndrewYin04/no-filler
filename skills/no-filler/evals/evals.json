@@ -1,0 +1,43 @@
+{
+  "skill_name": "no-filler",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/no-filler evals/files/fed.md",
+      "expected_output": "The file is rewritten in place. Every sentence that only announced, framed, praised, or restated is gone; every fact (the $1 million bond, reserves, the overnight rate, the 10-year yield, the fed funds rate) survives; there are no em-dashes; the heading is unchanged. The reply says how many sentences were removed and rewritten and shows a few before/after pairs, and the reply itself contains no filler.",
+      "files": ["evals/files/fed.md"],
+      "expectations": [
+        "node scripts/filler-lint.js evals/files/fed.md prints 'no filler found' and exits 0 after the rewrite",
+        "The rewritten file still mentions '$1 million', 'reserves', 'overnight', '10-year', and 'fed funds'",
+        "The rewritten file contains no em-dash and no double hyphen outside code",
+        "The rewritten file keeps the '# How the Fed moves rates' heading",
+        "The reply reports counts of removed and rewritten sentences and at least one before/after pair",
+        "The reply contains no praise opener, no announcing sentence, and no closing offer"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write two paragraphs for a high schooler explaining why the Fed buying bonds lowers interest rates.",
+      "expected_output": "Claude loads the no-filler skill from its description (the request is prose a person will read) and writes two paragraphs in which every sentence carries a fact or a step of reasoning: what reserves are, that the Fed pays for bonds by creating reserves, that banks lend excess reserves overnight, that more lenders push the overnight rate down, and that longer rates follow because they forecast the overnight rate. No announcing sentences, no empty clauses before a colon, no dashes, no closing offer.",
+      "files": [],
+      "expectations": [
+        "The Skill tool is invoked with no-filler before the prose is written",
+        "node scripts/filler-lint.js on the reply prints 'no filler found'",
+        "The reply defines reserves before using the term",
+        "The reply contains no sentence such as 'this is the subtle part', 'here's the thing', or 'let's unpack'",
+        "The reply does not end with an offer to help further"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/no-filler Great question! This is the subtle part, and it's where most explanations slow down: convexity is really about segments. It's not about curvature; it's about the segment between two points staying inside — the segment is the test, the shape is the subject. Let's unpack that.",
+      "expected_output": "A rewrite of the pasted text with the same content and none of the filler, for example: 'A set is convex when the segment between any two of its points stays inside it. Curvature is not the test: a square with straight edges is convex, and a crescent with curved edges is not.' Then the linter result on the rewrite, showing no filler.",
+      "files": [],
+      "expectations": [
+        "The rewrite states the segment test and keeps the curvature contrast as a plain sentence",
+        "The rewrite contains no praise opener, no 'this is the subtle part', no 'it's not about X; it's about Y', no dash, and no 'let's unpack'",
+        "The reply shows the linter run on the rewrite reporting no filler"
+      ]
+    }
+  ]
+}

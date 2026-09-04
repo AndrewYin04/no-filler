@@ -1,0 +1,7 @@
+# skill-creator eval workspaces
+*-workspace/
+
+# Node and editor noise
+node_modules/
+.DS_Store
+Thumbs.db

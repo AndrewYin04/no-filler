@@ -1,0 +1,5 @@
+# How the Fed moves rates
+
+Great question, and this is the subtle part, because it's where most explanations slow down. The Fed sits at one end of that same yield curve: it directly sets the shortest rate, and the market prices the 10-year partly by guessing where the Fed's rate will be over the next ten years. Your "control the money supply by buying and selling bonds" is how they enforce that target — the bond operations are the tool, the fed funds rate is the dial.
+
+Now the part you actually asked, which I've been asserting without proving: why does the quantity of money move the rate? The answer is genuinely strange the first time you hear it: the Fed creates the money. When the Fed buys a $1 million bond from a bank, it pays by adding $1 million of reserves to that bank's account at the Fed. Banks with more reserves than they need lend the excess overnight, and more lenders chasing the same borrowers pushes the overnight rate down. It's not about the bond; it's about the reserves. Let's unpack that further next time. I hope this helps!

@@ -1,0 +1,20 @@
+The Fed sets the overnight rate directly. Banks lend to each other at that rate, so every longer loan is priced off it.
+A square is convex: the segment between any two of its points stays inside it.
+Slides 1-5 cover cones; slides 6-11 cover affine sets.
+The 10-year yield is the market's guess at the average overnight rate over the next ten years, plus a premium for locking money up that long.
+When the Fed buys bonds, it pays with new reserves, and banks holding more reserves lend them out at a lower rate.
+Run the tests before pushing:
+
+```
+tests/unit.sh --verbose
+```
+
+The flag `--all` lists warn-tier hits too, and the table below has a rule row.
+
+| Tier | Meaning |
+| --- | --- |
+| block | no content for the reader |
+
+> This is the subtle part, quoted here as a bad example inside a blockquote, so it is not flagged.
+
+See https://example.com/a--b for the spec.

@@ -1,0 +1,11 @@
+This is the subtle part, and it's where the slide slows down.
+The Fed sits at one end of that same yield curve: it directly sets the shortest rate, and the market prices the 10-year partly by guessing where the Fed's rate will be over the next ten years.
+Your "control the money supply by buying and selling bonds" is how they enforce that target — the bond operations are the tool, the fed funds rate is the dial.
+the answer is genuinely strange the first time you hear it: the Fed creates the money.
+Now the part you actually asked, which I've been asserting without proving: why does the quantity of money move the rate?
+Great question! You're absolutely right that convexity matters here.
+It's not about the money; it's about the rate.
+Let's unpack this before we go further.
+Interestingly, the disk is convex.
+The easy half was the proof -- the hard half was the intuition.
+We'll come back to that later, but it's worth noting that the mechanism is genuinely elegant.
