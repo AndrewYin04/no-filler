@@ -7,8 +7,10 @@
 //
 // Skipped on purpose: fenced code, inline code, URLs, YAML front matter,
 // blockquote lines (">"), and phrases inside double quotes, so a document can
-// quote a bad sentence as an example without being flagged for it. Line
-// numbers refer to the original text.
+// quote a bad sentence as an example without being flagged for it. Dashes in
+// a heading, or right after a bold label opening a list item, are structural
+// and allowed; dashes inside sentences are not. Line numbers refer to the
+// original text.
 //
 // Two tiers:
 //   block  the sentence carries no content for the reader, or breaks a
@@ -59,7 +61,7 @@ const PATTERNS = [
   {
     name: 'em-dash', tier: 'block',
     re: /—|(?<!-)--(?!-)/g,
-    fix: 'No em-dashes or double hyphens. Recast with a comma, a colon, or two sentences.',
+    fix: 'No em-dashes or double hyphens inside a sentence. Recast with a comma, a colon, or two sentences. (A dash after a bold label in a list item, or in a heading, is fine.)',
   },
   {
     name: 'unpack', tier: 'block',
@@ -124,12 +126,27 @@ function blank(match) {
   return match.replace(/[^\n]/g, ' ');
 }
 
+const DASH_RE = /—|–|(?<!-)--(?!-)/g;
+
+// Dashes are banned inside sentences. Two structural uses are allowed and
+// blanked before matching: a dash in a heading line, and a dash used as the
+// separator right after a bold, underscored, or code label that opens a list
+// item ("- **Price** — a bond pays a fixed amount").
+function allowStructuralDashes(text) {
+  return text
+    .replace(/^#{1,6} [^\n]*$/gm, (line) => line.replace(DASH_RE, (d) => ' '.repeat(d.length)))
+    .replace(/^([ \t]*(?:[-*+]|\d+[.)])[ \t]+(?:\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`)[ \t]*)(—|–|--)(?=[ \t])/gm,
+      (m, pre, d) => pre + ' '.repeat(d.length));
+}
+
 function maskSkipped(text) {
   let t = String(text);
   if (t.startsWith('---\n')) {
     const end = t.indexOf('\n---', 4);
     if (end !== -1) t = blank(t.slice(0, end + 4)) + t.slice(end + 4); // YAML front matter
   }
+  // Structural dashes first, while list labels and headings are still visible.
+  t = allowStructuralDashes(t);
   return t
     .replace(/```[\s\S]*?```/g, blank)                  // fenced code
     .replace(/`[^`\n]*`/g, blank)                        // inline code

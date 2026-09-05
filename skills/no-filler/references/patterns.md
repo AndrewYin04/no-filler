@@ -45,9 +45,11 @@ the plain sentence: what it is, with a verb. The rule also covers shapes the
 regex cannot see, such as "the easy half was A, the hard half was B"; those
 are caught by reading, not by the linter.
 
-`em-dash`. An em-dash (`—`) or a double hyphen (`--`) outside code. Recast
-with a comma, a colon, a semicolon, or two sentences. Runs of three or more
-hyphens (tables, horizontal rules) are not matched.
+`em-dash`. An em-dash (`—`) or a double hyphen (`--`) inside a sentence,
+outside code. Recast with a comma, a colon, a semicolon, or two sentences.
+Not matched: a dash in a heading line, a dash used as the separator right
+after a bold, underscored, or code label that opens a list item, and runs of
+three or more hyphens (tables, horizontal rules).
 
 `unpack`. "Let's unpack", "let's dive in", "let me break this down", "buckle
 up", "bear with me". Delete; start with the first fact.

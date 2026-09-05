@@ -1,15 +1,15 @@
 ---
 name: no-filler
 description: >-
-  Writing rules that remove AI-sounding filler from prose: sentences that
+  Rewrite a file or pasted text to remove AI-sounding filler: sentences that
   announce instead of say ("this is the subtle part"), an empty clause before
   a colon, a slogan after a dash, aphorism-shaped sentences ("X is not Y; it
-  is Z"), praise openers, adjectives standing in for facts, em-dashes. Use
-  whenever writing or rewriting prose a person will read (explanations,
-  answers, docs, messages, essays, lessons) and when asked to make text sound
-  less like AI, less wordy, or clearer. /no-filler <file> lints and rewrites a
-  file in place; /no-filler <text> rewrites the text.
+  is Z"), praise openers, adjectives standing in for facts, em-dashes inside
+  sentences. /no-filler <file> lints and rewrites the file in place;
+  /no-filler <text> rewrites the text. The always-on version of these rules
+  is the user rule ~/.claude/rules/no-filler.md that this repo installs.
 argument-hint: "[file to rewrite, or text]"
+disable-model-invocation: true
 allowed-tools:
   - Read
   - "Bash(node ${CLAUDE_SKILL_DIR}/scripts/filler-lint.js *)"
@@ -105,10 +105,11 @@ every loan in the economy is priced off it."
 
 ### Dashes
 
-No em-dashes and no double hyphens, anywhere: not in a sentence, not as the
-separator after a bold label in a list item, not in a heading. Recast with a
-comma, a colon, a semicolon, or two sentences; in a list, a colon after the
-label. Check the rendered output, not only the source.
+No em-dashes and no double hyphens inside a sentence. Recast with a comma, a
+colon, a semicolon, or two sentences. Two structural uses are fine: a dash as
+the separator after a bold label that opens a list item ("**Price** — a bond
+pays a fixed amount"), and a dash in a heading. Check the rendered output,
+not only the source.
 
 ### Praise and agreement openers
 

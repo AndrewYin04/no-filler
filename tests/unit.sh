@@ -58,6 +58,8 @@ if printf 'The groove holds the waveform. Now the part that drives the whole des
 if printf 'The part that failed was the pump, and now the pressure is back to normal.\n' | node "$lint" - >/dev/null; then ok "\"the part that failed\" mid-sentence is not announcing"; else bad "false positive on \"the part that failed\""; fi
 if printf 'Slides 1-5 cover cones; pass `--all` to list warn-tier hits, and see the table below.\n\n| a | b |\n| --- | --- |\n' | node "$lint" - >/dev/null; then ok "hyphen ranges, inline code, and table rules are not dashes"; else bad "false positive on a hyphen range, inline code, or a table rule"; fi
 if printf 'The answer is 4: two points on each side. The answer is no: the disk is convex.\n' | node "$lint" - >/dev/null; then ok "a short answer clause before a colon passes"; else bad "false positive on a content-bearing clause before a colon"; fi
+if printf -- '- **Price** — a bond pays a fixed amount.\n1. __Reserves__ -- the Fed creates them.\n* `flag` — what it does.\n## Setup — first run\n' | node "$lint" - >/dev/null; then ok "a dash after a bold, underscored, or code list label, or in a heading, is allowed"; else bad "false positive on a structural dash (list label or heading)"; fi
+if printf -- '- **Price** is fixed — the yield moves.\n- A bond — a loan you can buy — pays a fixed amount.\n' | node "$lint" - >/dev/null; then bad "missed a dash inside a sentence within a list item"; else ok "a dash inside a sentence is still caught, even in a list item"; fi
 if printf 'The answer is genuinely strange the first time you hear it: the Fed creates the money.\n' | node "$lint" - >/dev/null; then bad "missed an empty clause before a colon"; else ok "an empty clause before a colon is still caught"; fi
 if printf 'He wrote "this is the subtle part, and it is where the\nslide slows down" in the margin.\n' | node "$lint" - >/dev/null; then ok "a quoted phrase that wraps a line is skipped"; else bad "false positive inside a wrapped quotation"; fi
 two="\"Now the part you actually asked, which I have been asserting without proving: why does the quantity of money move the rate? The answer is genuinely strange the first time you hear it, and it takes a moment to accept: the Fed creates the money from nothing at all.\""
@@ -72,7 +74,9 @@ msg() { node -e 'process.stdout.write(JSON.stringify(process.argv[1]))' "$1"; }
 r="$(hookrun "{\"last_assistant_message\":$(msg 'The disk is convex: every segment between two of its points stays inside it.')}")"
 if [ "$r" = "0" ]; then ok "hook allows a clean reply (exit 0)"; else bad "hook blocked a clean reply (exit $r)"; fi
 r="$(hookrun "{\"last_assistant_message\":$(msg $'1. **Price** — a bond pays a fixed amount.\n2. **Reserves** — the Fed creates them.')}")"
-if [ "$r" = "2" ]; then ok "hook blocks em-dash separators in a list (exit 2)"; else bad "hook let em-dash separators through (exit $r)"; fi
+if [ "$r" = "0" ]; then ok "hook allows dashes as list-label separators (exit 0)"; else bad "hook blocked structural dashes after bold labels (exit $r)"; fi
+r="$(hookrun "{\"last_assistant_message\":$(msg 'A bond — a loan you can buy — pays a fixed amount.')}")"
+if [ "$r" = "2" ]; then ok "hook blocks a dash inside a sentence (exit 2)"; else bad "hook let a sentence dash through (exit $r)"; fi
 r="$(hookrun "{\"last_assistant_message\":$(msg 'Great question! The disk is convex.')}")"
 if [ "$r" = "2" ]; then ok "hook blocks a praise opener (exit 2)"; else bad "hook let a praise opener through (exit $r)"; fi
 r="$(hookrun "{\"stop_hook_active\":true,\"last_assistant_message\":$(msg 'Great question! The disk is convex.')}")"
@@ -87,6 +91,44 @@ for f in skills/no-filler/SKILL.md skills/no-filler/references/patterns.md READM
   if node "$lint" "$repo/$f" >/dev/null; then ok "$f has no block-tier filler"; else bad "$f contains block-tier filler:"; node "$lint" "$repo/$f" | head -n 5; fi
 done
 
+echo "=== rule file, settings hook tool, installer refresh ==="
+rule="$repo/rules/no-filler.md"
+if [ -f "$rule" ]; then ok "rules/no-filler.md exists"; else bad "rules/no-filler.md missing"; fi
+rl="$(wc -l < "$rule")"
+if [ "$rl" -le 60 ]; then ok "rule is $rl lines (loads into every session, so it stays short)"; else bad "rule is $rl lines; keep it under 60"; fi
+if node "$lint" "$rule" >/dev/null; then ok "rule passes its own linter"; else bad "rule contains block-tier filler:"; node "$lint" "$rule" | head -n 5; fi
+for phrase in "announce" "colon" "slogan" "aphorism" "dash" "praise" "adjective" "not cutting content" "Stop hook"; do
+  if grep -qi -- "$phrase" "$rule"; then ok "rule covers: $phrase"; else bad "rule does not mention: $phrase"; fi
+done
+tmp="${TMPDIR:-/tmp}/no-filler-unit-$$"; mkdir -p "$tmp"; trap 'rm -rf "$tmp"' EXIT
+tool="$repo/tools/settings-hook.js"
+cat > "$tmp/settings.json" <<'EOF'
+{
+  "permissions": { "allow": ["Read"] },
+  "hooks": {
+    "Stop": [ { "hooks": [ { "type": "command", "command": "echo other-stop-hook" } ] } ],
+    "PreToolUse": [ { "matcher": "Bash", "hooks": [ { "type": "command", "command": "echo pre" } ] } ]
+  }
+}
+EOF
+cmd='f="/x/no-filler/scripts/stop-check.js"; exec node "$f"'
+if node "$tool" status "$tmp/settings.json" >/dev/null; then bad "status reports installed on a fresh file"; else ok "status: not installed on a fresh file"; fi
+node "$tool" add "$tmp/settings.json" "$cmd" >/dev/null && node "$tool" add "$tmp/settings.json" "$cmd" >/dev/null
+n="$(node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(s.hooks.Stop.filter(e=>JSON.stringify(e).includes("no-filler/scripts/stop-check.js")).length))' "$tmp/settings.json")"
+if [ "$n" = "1" ]; then ok "add is idempotent (one entry after two adds)"; else bad "add produced $n entries"; fi
+if node "$tool" status "$tmp/settings.json" >/dev/null; then ok "status: installed after add"; else bad "status wrong after add"; fi
+keep="$(node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write([s.permissions.allow[0], s.hooks.Stop.length, s.hooks.PreToolUse.length].join(","))' "$tmp/settings.json")"
+if [ "$keep" = "Read,2,1" ]; then ok "other settings and hooks preserved on add"; else bad "add disturbed other settings: $keep"; fi
+if ls "$tmp"/settings.json.bak-* >/dev/null 2>&1; then ok "backup written before the change"; else bad "no backup written"; fi
+node "$tool" remove "$tmp/settings.json" >/dev/null
+keep="$(node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write([s.permissions.allow[0], s.hooks.Stop.length, s.hooks.PreToolUse.length].join(","))' "$tmp/settings.json")"
+if [ "$keep" = "Read,1,1" ]; then ok "remove takes out only our entry"; else bad "remove disturbed other settings: $keep"; fi
+printf 'not json' > "$tmp/broken.json"
+node "$tool" status "$tmp/broken.json" >/dev/null 2>&1; rc=$?
+if [ "$rc" -eq 2 ]; then ok "malformed settings file exits 2 and is left alone"; else bad "malformed settings file exit $rc (wanted 2)"; fi
+if [ ! -f "$tmp/nothing.json" ] && node "$tool" add "$tmp/nothing.json" "$cmd" >/dev/null && node "$tool" status "$tmp/nothing.json" >/dev/null; then ok "add creates a missing settings file"; else bad "add failed on a missing settings file"; fi
+if CLAUDE_RULES_DIR="$tmp/rules" "$repo/install.sh" --refresh-rule >/dev/null && cmp -s "$rule" "$tmp/rules/no-filler.md"; then ok "install.sh --refresh-rule copies the rule"; else bad "install.sh --refresh-rule did not copy the rule"; fi
+
 echo "=== documentation and frontmatter ==="
 names="$(node -e 'process.stdout.write(require(process.argv[1]).PATTERNS.map(p=>p.name).join("\n"))' "$lint")"
 for n in $names; do
@@ -96,7 +138,7 @@ front="$(awk 'NR==1&&/^---$/{f=1;next} f&&/^---$/{exit} f' "$skill/SKILL.md")"
 for key in "name: no-filler" "description:" "allowed-tools:" "filler-lint.js" "hooks:" "stop-check.js"; do
   if printf '%s\n' "$front" | grep -q -- "$key"; then ok "frontmatter has $key"; else bad "frontmatter lacks $key"; fi
 done
-if printf '%s\n' "$front" | grep -q "disable-model-invocation: true"; then bad "model invocation is disabled; Claude must be able to load this skill on its own"; else ok "model invocation stays enabled"; fi
+if printf '%s\n' "$front" | grep -q "disable-model-invocation: true"; then ok "model invocation is disabled (the always-on rule covers ordinary writing; /no-filler is the manual tool)"; else bad "model invocation enabled; the rule makes auto-loading redundant and it prompts the user"; fi
 desc_len="$(awk '/^description: >-/{f=1;next} f&&/^[a-z-]+:/{exit} f' "$skill/SKILL.md" | tr -s ' \n' ' ' | wc -c)"
 if [ "$desc_len" -le 1536 ]; then ok "description is $desc_len characters (listing truncates at 1,536)"; else bad "description is $desc_len characters; the listing truncates at 1,536"; fi
 tutor_copy="$repo/../1-on-1-tutor/skills/1-on-1-tutor-mode/scripts/filler-lint.js"
