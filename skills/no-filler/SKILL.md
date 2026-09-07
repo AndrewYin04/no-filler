@@ -13,11 +13,6 @@ disable-model-invocation: true
 allowed-tools:
   - Read
   - "Bash(node ${CLAUDE_SKILL_DIR}/scripts/filler-lint.js *)"
-triggers:
-  - "/no-filler"
-  - "sounds like AI"
-  - "too wordy"
-  - "cut the filler"
 hooks:
   Stop:
     - hooks:

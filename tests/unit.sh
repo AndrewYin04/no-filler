@@ -139,6 +139,15 @@ for key in "name: no-filler" "description:" "allowed-tools:" "filler-lint.js" "h
   if printf '%s\n' "$front" | grep -q -- "$key"; then ok "frontmatter has $key"; else bad "frontmatter lacks $key"; fi
 done
 if printf '%s\n' "$front" | grep -q "disable-model-invocation: true"; then ok "model invocation is disabled (the always-on rule covers ordinary writing; /no-filler is the manual tool)"; else bad "model invocation enabled; the rule makes auto-loading redundant and it prompts the user"; fi
+# Claude Code ignores an unknown frontmatter key without an error, so a skill
+# written with one looks configured and is not. This is the documented set
+# (code.claude.com/docs/en/skills, frontmatter reference).
+documented="agent allowed-tools argument-hint arguments background compatibility context description disable-model-invocation disallowed-tools effort hooks license metadata model name paths shell user-invocable when_to_use"
+unknown=""
+for k in $(printf '%s\n' "$front" | grep -E '^[a-z_-]+:' | sed 's/:.*//'); do
+  case " $documented " in *" $k "*) ;; *) unknown="$unknown $k" ;; esac
+done
+if [ -z "$unknown" ]; then ok "frontmatter uses only documented fields"; else bad "undocumented frontmatter key(s):$unknown (Claude Code ignores unknown keys silently)"; fi
 desc_len="$(awk '/^description: >-/{f=1;next} f&&/^[a-z-]+:/{exit} f' "$skill/SKILL.md" | tr -s ' \n' ' ' | wc -c)"
 if [ "$desc_len" -le 1536 ]; then ok "description is $desc_len characters (listing truncates at 1,536)"; else bad "description is $desc_len characters; the listing truncates at 1,536"; fi
 tutor_copy="$repo/../1-on-1-tutor/skills/1-on-1-tutor-mode/scripts/filler-lint.js"

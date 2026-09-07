@@ -58,9 +58,12 @@ tests/e2e.sh --scenario hook --keep
    allows the retry pass (`stop_hook_active`) and unreadable input; the
    settings tool refuses a malformed file (exit 2), backs up before writing,
    and removes only its own entry.
-6. Frontmatter uses only fields Claude Code documents, plus `triggers` and
-   `metadata` for the agent memory standard. `allowed-tools` is a YAML list so
-   the Bash rule with spaces inside the parentheses is one item.
+6. Frontmatter uses only fields the Claude Code docs define; `tests/unit.sh`
+   checks every key against that list. An unknown key is ignored with no
+   error, so a skill written with one looks configured and is not. `triggers:`
+   was carried here until 2026-09-07 for exactly that reason and did nothing.
+   `allowed-tools` is a YAML list so the Bash rule with spaces inside the
+   parentheses is one item.
 7. Rewrites never drop content: facts, numbers, names, and defined terms
    survive; `tests/e2e.sh` checks that on the fixture.
 
